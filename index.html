@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Updates</title>
+<style>
+:root{--bg:#f4f2ee;--card:#fff;--ink:#1d1d1f;--mute:#777;--acc:#2f6f5e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#fffdf9;border-bottom:1px solid #e6e1d8;padding:12px 14px 10px}
+h1{margin:0 0 8px;font-size:20px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+h1 small{font-size:12px;color:var(--mute);font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:6px 8px;padding-bottom:4px;align-items:center}
+.chip{flex:none;border:1px solid #d8d2c6;background:#fff;border-radius:18px;padding:6px 12px;font-size:14px;cursor:pointer;white-space:nowrap;color:var(--ink)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+select.chip{padding:6px 8px;max-width:190px}
+#picker{display:flex;gap:8px;align-items:center;margin-top:6px}#picker[hidden]{display:none}
+#picker select{flex:1;min-width:0;height:44px;font-size:16px;padding:0 12px;border:2px solid var(--acc);border-radius:12px;background:#fff;color:var(--ink);-webkit-appearance:menulist;appearance:auto}
+#picker select.on{background:#e8f2ee;font-weight:600}
+#picker button{flex:none;height:44px;padding:0 14px;font-size:15px;border:0;border-radius:12px;background:var(--acc);color:#fff;cursor:pointer}
+#sbar{display:flex;gap:8px;align-items:center;margin-top:6px}
+#sbar input{flex:1;min-width:0;height:38px;font-size:15px;padding:0 12px;border:1px solid #d8d2c6;border-radius:12px;background:#fff;color:var(--ink)}
+#sbar input:focus{outline:none;border-color:var(--acc)}
+#sbar button{flex:none;height:38px;padding:0 12px;font-size:14px;border:1px solid #d8d2c6;border-radius:12px;background:#fff;color:var(--ink);cursor:pointer}
+#pins{max-width:640px;margin:0 auto;padding:12px 12px 0}#pins:empty{padding:0}
+main{max-width:640px;margin:0 auto;padding:12px}
+.card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin:0 0 14px;overflow:hidden}
+.top{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.av{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:none;background:#ccc;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.nm{font-weight:600;cursor:pointer}.tm{color:var(--mute);font-size:13px}
+.pin .top .tm{color:var(--acc);font-weight:600}
+.media img,.media video{display:block;width:100%;max-height:78vh;background:#000;object-fit:contain}
+.media video.dbx{display:block;width:100%;max-height:78vh;background:#000}
+.media audio{display:block;width:calc(100% - 24px);margin:4px 12px 12px}
+.media img[data-src]{min-height:240px;background:#e9e6e0}
+.media .photo-btn{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+.cap{padding:8px 12px 12px;white-space:pre-wrap;word-wrap:break-word;unicode-bidi:plaintext}
+.txt{min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px 18px;font-size:20px;white-space:pre-wrap;word-wrap:break-word;unicode-bidi:plaintext}
+.more{display:block;margin:10px auto 30px;padding:10px 22px;border-radius:20px;border:0;background:var(--acc);color:#fff;font-size:15px;cursor:pointer}
+.note{text-align:center;color:var(--mute);padding:30px 10px}
+a{color:var(--acc)}
+.vbad{background:#fff4e5;color:#7a4b00;font-size:14px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vbad button{border:1px solid #d4a76a;background:#fff;border-radius:10px;padding:4px 10px;font-size:13px;cursor:pointer;color:#7a4b00}
+#lb{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px}
+#lb.open{display:flex}
+#lb img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:6px;background:#111}
+#lb .lb-bar{display:flex;gap:14px;align-items:center;margin-top:12px}
+#lb .lb-bar a,#lb .lb-bar button{color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:7px 15px;font-size:14px;text-decoration:none;cursor:pointer}
+</style></head><body>
+<header>
+  <h1>Updates <small id="st"></small></h1>
+  <div class="chips" id="chips"></div>
+  <div id="picker" hidden><select id="psel" aria-label="Choose which status to see"></select><button id="pclr" hidden>Show all</button></div>
+  <div id="sbar"><input id="q" type="search" placeholder="Search posts or names…" autocomplete="off" aria-label="Search posts or names"><button id="qclr" hidden>Clear</button></div>
+</header>
+<div id="pins"></div>
+<main id="feed"><div class="note">Loading…</div></main>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <img id="lbimg" alt="">
+  <div class="lb-bar"><a id="lbfull" href="#" target="_blank" rel="noopener">Open full size</a><button id="lbclose" type="button">Close ✕</button></div>
+</div>
+<script>
+const MINE=[
+  ["mine","⭐ My list"],
+  ["bebda4f7-bb30-409d-bd46-d1c2011465fa","MoMo"],
+  ["860dac42-edbb-4156-9c5a-e0803d9d5f3d","Chaimish"],
+  ["b7aa6fe3-6912-43c5-929a-131a818f23fc","Kremel"],
+  ["0f11c98b-0786-400a-9690-8353989d20e3","Hershey Weinberger"],
+  ["2e44fd3a-79bf-405f-a69a-a7c02e839cba","Perlowitz"],
+  ["68cf29e5-0663-4ce1-beae-43eefb149f07","Shia Berko"],
+  ["e2b7ccdc-c748-4b31-82ec-ce02401d9053","TwoTone Media"]
+];
+const MINE_IDS=new Set(MINE.slice(1).map(x=>x[0]));
+const PAGE=20, $=s=>document.querySelector(s);
+const CACHE={};
+
+let DBX={}, CC=[], ccView="", pick="", query="";
+let view=new URLSearchParams(location.search).get("v")||(()=>{try{return localStorage.getItem("view")}catch(e){return null}})()||"mine";
+let data=null, shown=0, allCreators=[], loadTok=0, busy=false;
+
+function getPick(v){try{return localStorage.getItem("pick:"+v)||""}catch(e){return""}}
+function setPick(v,p){try{p?localStorage.setItem("pick:"+v,p):localStorage.removeItem("pick:"+v)}catch(e){}}
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function fmt(s){
+  s=esc(s);
+  s=s.replace(/\*([^*\n]+)\*/g,"<b>$1</b>").replace(/_([^_\n]+)_/g,"<i>$1</i>");
+  return s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+function ago(ts){
+  if(!ts)return"";
+  const d=(Date.now()-new Date(ts))/1000;
+  if(d<60)return"just now";
+  if(d<3600)return Math.floor(d/60)+" min ago";
+  if(d<86400)return Math.floor(d/3600)+" hr ago";
+  return new Date(ts).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+}
+
+async function fetchJson(path){
+  if(CACHE[path])return CACHE[path];
+  const r=await fetch(path,{cache:"no-cache"});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  CACHE[path]=j;
+  return j;
+}
+
+async function ensureCreators(){
+  if(allCreators.length)return;
+  try{
+    const cl=await fetchJson("data/creators.json");
+    if(Array.isArray(cl)){
+      allCreators=cl.map(([id,name])=>({id,name}));
+      chips();
+    }
+  }catch(e){}
+}
+
+function chips(){
+  const c=$("#chips");
+  let h="";
+  MINE.forEach(([v,n],i)=>{
+    h+='<span class="chip'+(view==v?" on":"")+'" data-v="'+v+'">'+n+'</span>';
+    if(i===0){
+      h+='<span class="chip'+(view=="all"?" on":"")+'" data-v="all">Today</span>';
+      h+='<span class="chip'+(view=="week"?" on":"")+'" data-v="week">7 days</span>';
+    }
+  });
+  h+='<select class="chip" id="sel" aria-label="More creators"><option value="">More…</option>'+
+    allCreators.map(x=>'<option value="'+x.id+'"'+(x.id==view?" selected":"")+'>'+esc(x.name)+'</option>').join("")+
+    '</select>';
+  c.innerHTML=h;
+  c.querySelectorAll("span.chip").forEach(e=>e.onclick=()=>go(e.dataset.v));
+  $("#sel").onchange=e=>{if(e.target.value)go(e.target.value)};
+}
+
+function go(v){
+  view=v;
+  try{localStorage.setItem("view",v)}catch(e){}
+  history.replaceState(null,"",v=="mine"?location.pathname:"?v="+encodeURIComponent(v));
+  load();
+}
+
+const LZ=window.IntersectionObserver?new IntersectionObserver(es=>{
+  for(const e of es){
+    if(e.isIntersecting){
+      const el=e.target;
+      LZ.unobserve(el);
+      if(el.dataset.src){el.src=el.dataset.src;el.removeAttribute("data-src")}
+      if(el.dataset.poster){el.poster=el.dataset.poster;el.removeAttribute("data-poster")}
+    }
+  }
+},{rootMargin:"300px 0px"}):null;
+
+function lazy(root){
+  root.querySelectorAll("img[data-src]").forEach(i=>{
+    if(LZ)LZ.observe(i);else{i.src=i.dataset.src;i.removeAttribute("data-src")}
+  });
+  root.querySelectorAll("video[data-poster]").forEach(v=>{
+    if(LZ)LZ.observe(v);else{v.poster=v.dataset.poster;v.removeAttribute("data-poster")}
+  });
+}
+
+function openLB(src){
+  $("#lbimg").src=src;
+  $("#lbfull").href=src;
+  $("#lb").classList.add("open");
+}
+function closeLB(){
+  $("#lb").classList.remove("open");
+  $("#lbimg").src="";
+}
+$("#lbclose").onclick=closeLB;
+$("#lb").onclick=e=>{if(e.target===$("#lb"))closeLB()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeLB()});
+
+async function loadSource(v){
+  let file="data/feed_mine.json";
+  let singleCreator=null;
+  if(v==="mine")file="data/feed_mine.json";
+  else if(v==="all")file="data/feed_all.json";
+  else if(v==="week")file="data/feed_week.json";
+  else if(/^[0-9a-f-]{36}$/.test(v)){
+    singleCreator=v;
+    file=MINE_IDS.has(v)?"data/feed_mine.json":"data/feed_week.json";
+  }else{
+    file="data/feed_mine.json";
+  }
+  const [F,dbxDoc]=await Promise.all([
+    fetchJson(file),
+    fetchJson("data/dbx.json").catch(()=>({items:{}}))
+  ]);
+  const dbxMap=(dbxDoc&&dbxDoc.items)||{};
+  const cmap={};
+  for(const c of (F.creators||[]))cmap[c.id]=c;
+  let base=(F.items||[]).filter(s=>s.t!=="video"||dbxMap[s.id]);
+  if(singleCreator)base=base.filter(s=>s.c===singleCreator);
+  return {F,dbxMap,cmap,base};
+}
+
+function buildPage(src,o,n,cPick,qStr){
+  const {F,dbxMap,cmap,base}=src;
+  let list=base;
+  if(cPick)list=list.filter(s=>s.c===cPick);
+  const qt=(qStr||"").trim().toLowerCase();
+  if(qt){
+    const ws=qt.split(/\s+/).filter(Boolean);
+    list=list.filter(s=>{
+      const cn=(cmap[s.c]&&cmap[s.c].name)||"";
+      const hay=(cn+" "+(s.cap||"")).toLowerCase();
+      return ws.every(w=>hay.includes(w));
+    });
+  }
+  const items=list.slice(o,o+n);
+  const dbx={},cs={};
+  for(const s of items){
+    if(dbxMap[s.id])dbx[s.id]=dbxMap[s.id];
+    const c=cmap[s.c];
+    if(c)cs[s.c]=c;
+  }
+  const res={fetched:F.fetched,days:F.days,total:list.length,o,items,creators:Object.values(cs),dbx};
+  if(o===0&&(view==="mine"||view==="all"||view==="week")){
+    const cnt={};
+    for(const s of base)cnt[s.c]=(cnt[s.c]||0)+1;
+    res.cc=Object.keys(cnt).map(id=>[id,(cmap[id]&&cmap[id].name)||"?",cnt[id]]).sort((a,b)=>b[2]-a[2]||a[1].localeCompare(b[1]));
+  }
+  return res;
+}
+
+let currentSrc=null;
+
+function picker(){
+  const p=$("#picker"),s=$("#psel"),b=$("#pclr");
+  if(!p)return;
+  if(!(view==="mine"||view==="all"||view==="week")||!CC.length){p.hidden=true;return}
+  const tot=CC.reduce((a,x)=>a+x[2],0);
+  s.innerHTML='<option value="">👤 All statuses ('+tot+')</option>'+
+    CC.slice().sort((a,b)=>a[1].localeCompare(b[1])).map(([id,n,c])=>'<option value="'+id+'"'+(id==pick?" selected":"")+'>'+esc(n)+' ('+c+')</option>').join("");
+  s.value=pick;
+  s.className=pick?"on":"";
+  b.hidden=!pick;
+  p.hidden=false;
+  s.onchange=()=>{setPick(view,s.value);load()};
+  b.onclick=()=>{setPick(view,"");load()};
+}
+
+async function pins(){
+  const box=$("#pins");
+  if(!box)return;
+  if(!(view==="mine"||view==="all"||view==="week")||pick||query.trim()){box.innerHTML="";return}
+  let pdoc;
+  try{pdoc=await fetchJson("data/pinned.json")}catch(e){box.innerHTML="";return}
+  const items=(pdoc&&pdoc.items)||[];
+  box.innerHTML="";
+  for(const p of items){
+    const d=document.createElement("div");
+    d.className="card pin";
+    let m="";
+    if(p.url)m='<div class="media"><video class="dbx" controls playsinline preload="none" src="'+esc(p.url)+'"></video></div>';
+    else if(p.u&&p.t==="image")m='<div class="media"><button class="photo-btn" type="button"><img data-src="'+esc(p.u)+'" alt=""></button></div>';
+    else if(p.u&&p.t==="audio")m='<div class="media"><audio controls preload="none" src="'+esc(p.u)+'"></audio></div>';
+    if(!m&&!p.cap)continue;
+    d.innerHTML='<div class="top"><div class="av" style="background:#2f6f5e">📌</div><div><div class="nm" dir="auto">'+esc(p.name||"Pinned")+'</div><div class="tm">📌 Pinned</div></div></div>'+m+(p.cap?'<div class="cap" dir="auto">'+fmt(p.cap)+'</div>':"");
+    const pb=d.querySelector(".photo-btn");if(pb)pb.onclick=()=>openLB(p.u);
+    box.appendChild(d);
+    lazy(d);
+  }
+}
+
+function dbxVideo(d,s){
+  const md=d.querySelector(".media");
+  const ps=s.p||"";
+  const src=DBX[s.id]||s.u;
+  md.innerHTML='<video class="dbx" controls playsinline preload="none"'+(ps?' data-poster="'+esc(ps)+'"':'')+' src="'+esc(src)+'"></video>';
+  const v=md.querySelector("video");
+  if(d.isConnected)lazy(md);
+  let tm=null;
+  const fail=()=>{
+    clearTimeout(tm);
+    if(d.querySelector(".vbad"))return;
+    const n=document.createElement("div");
+    n.className="vbad";
+    n.innerHTML='<span>This video didn\'t load.</span><button type="button">Try again</button>';
+    n.querySelector("button").onclick=()=>{
+      n.remove();
+      dbxVideo(d,s);
+      const nv=d.querySelector("video.dbx");
+      if(nv)nv.play().catch(()=>{});
+    };
+    md.after(n);
+  };
+  v.addEventListener("error",fail);
+  v.addEventListener("play",()=>{if(v.readyState<3&&!tm)tm=setTimeout(()=>{if(v.readyState<3)fail()},25000)});
+  v.addEventListener("loadeddata",()=>{clearTimeout(tm);const n=d.querySelector(".vbad");if(n)n.remove()});
+  v.addEventListener("playing",()=>{clearTimeout(tm);document.querySelectorAll("video.dbx").forEach(o=>{if(o!==v&&!o.paused)o.pause()})});
+}
+
+function card(s){
+  const c=data.cmap[s.c]||{name:"",initials:"?",color:"#999"};
+  const av=c.avatar
+    ?'<img class="av" data-src="'+esc(c.avatar)+'" alt="">'
+    :'<div class="av" style="background:'+(c.color||"#999")+'">'+esc(c.initials||"?")+'</div>';
+  let m="";
+  if(s.t==="video"){
+    if(!DBX[s.id])return null;
+    m='<div class="media"></div>';
+  }else if(s.t==="image"){
+    const thumb=s.p||s.u;
+    if(!thumb)return null;
+    m='<div class="media"><button class="photo-btn" type="button" title="View full size"><img data-src="'+esc(thumb)+'" alt=""></button></div>';
+  }else if(s.t==="audio"){
+    if(!s.u)return null;
+    m='<div class="media"><audio controls preload="none" src="'+esc(s.u)+'"></audio></div>';
+  }else if(s.t==="text"){
+    m='<div class="txt" dir="auto" style="background:'+(s.bg||"#5b7f74")+';color:'+(s.fg||"#fff")+'"><div>'+fmt(s.cap||"")+'</div></div>';
+  }
+  const cap=(s.t!=="text"&&s.cap)?'<div class="cap" dir="auto">'+fmt(s.cap)+'</div>':"";
+  const d=document.createElement("div");
+  d.className="card";
+  d.innerHTML='<div class="top">'+av+'<div><div class="nm" dir="auto">'+esc(c.name)+'</div><div class="tm">'+ago(s.ts)+'</div></div></div>'+m+cap;
+  const avImg=d.querySelector("img.av");
+  if(avImg){
+    avImg.onerror=()=>{
+      const fb=document.createElement("div");
+      fb.className="av";
+      fb.style.background=c.color||"#999";
+      fb.textContent=c.initials||"?";
+      avImg.replaceWith(fb);
+    };
+  }
+  d.querySelector(".nm").onclick=()=>go(s.c);
+  if(s.t==="video"&&DBX[s.id])dbxVideo(d,s);
+  if(s.t==="image"){
+    const pb=d.querySelector(".photo-btn");
+    if(pb)pb.onclick=()=>openLB(s.u||s.p);
+  }
+  return d;
+}
+
+function merge(j){
+  for(const c of j.creators)data.cmap[c.id]=c;
+  Object.assign(DBX,j.dbx||{});
+  data.items.push(...j.items);
+  data.total=j.total;
+}
+
+function renderFromSrc(){
+  const j=buildPage(currentSrc,0,PAGE,pick,query);
+  DBX={};
+  data={days:j.days,fetched:j.fetched,total:0,items:[],cmap:{}};
+  merge(j);
+  if(j.cc){
+    CC=j.cc;
+    ccView=view;
+    if(pick&&!CC.some(x=>x[0]===pick)){setPick(view,"");pick="";renderFromSrc();return}
+    picker();
+  }
+  const pn=pick&&(CC.find(x=>x[0]===pick)||[])[1];
+  const upd=j.fetched?" · updated "+ago(j.fetched):"";
+  $("#st").textContent=data.total+" posts"+(pn?" · "+pn:"")+" · "+(data.days===1?"last 24 hrs":"last 7 days")+upd;
+  $("#feed").innerHTML="";
+  shown=0;
+  more();
+}
+
+async function load(){
+  const tok=++loadTok;
+  pick=(view==="mine"||view==="all"||view==="week")?getPick(view):"";
+  if(ccView!==view)CC=[];
+  picker();
+  chips();
+  pins();
+  $("#feed").innerHTML='<div class="note">Loading…</div>';
+  $("#st").textContent="";
+  busy=true;
+  try{
+    currentSrc=await loadSource(view);
+  }catch(e){
+    if(tok!==loadTok)return;
+    busy=false;
+    $("#feed").innerHTML='<div class="note">Couldn\'t load right now. <a href="#" onclick="load();return false">Try again</a></div>';
+    return;
+  }
+  if(tok!==loadTok)return;
+  busy=false;
+  renderFromSrc();
+}
+
+function more(){
+  const f=$("#feed");
+  let ob=f.querySelector(".more");
+  if(shown>=data.items.length&&data.items.length<data.total&&currentSrc){
+    const j=buildPage(currentSrc,data.items.length,PAGE,pick,query);
+    merge(j);
+  }
+  ob=f.querySelector(".more");
+  if(ob)ob.remove();
+  const part=data.items.slice(shown,shown+PAGE);
+  for(const s of part){
+    const c=card(s);
+    if(!c)continue;
+    f.appendChild(c);
+    lazy(c);
+  }
+  shown+=part.length;
+  if(!data.total){
+    f.innerHTML='<div class="note">'+(query.trim()?"No matching posts found.":"Nothing new here right now.")+'</div>';
+  }
+  if(shown<data.total){
+    const b=document.createElement("button");
+    b.className="more";
+    b.textContent="Show more";
+    b.onclick=more;
+    f.appendChild(b);
+  }
+}
+
+let qTimer=null;
+$("#q").addEventListener("input",e=>{
+  query=e.target.value;
+  $("#qclr").hidden=!query;
+  clearTimeout(qTimer);
+  qTimer=setTimeout(()=>{if(currentSrc){pins();renderFromSrc()}},160);
+});
+$("#qclr").onclick=()=>{
+  query="";
+  $("#q").value="";
+  $("#qclr").hidden=true;
+  if(currentSrc){pins();renderFromSrc()}
+};
+
+document.addEventListener("play",e=>{
+  document.querySelectorAll("video,audio").forEach(v=>{if(v!==e.target)v.pause()});
+},true);
+
+ensureCreators();
+load();
+</script></body></html>
